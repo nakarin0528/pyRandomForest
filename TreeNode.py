@@ -4,8 +4,9 @@ import numpy as np
 
 class TreeNode:
 
-    def __init__(self, max_depth=None, random_state=None):
+    def __init__(self, criterion="gini", max_depth=None, random_state=None):
         super(TreeNode, self).__init__()
+        self.criterion = criterion          # 分類方法
         self.max_depth = max_depth          # 深さの最大
         self.random_state = random_state    # 乱数のシード設定
         self.depth = None                   # 深さ
@@ -14,35 +15,42 @@ class TreeNode:
         self.feature = None                 # 分割する特徴番号
         self.threshold = None               # 分割する閾値
         self.label = None                   # 割り当て立てたクラス番号
-        self.num_data = None                # 割り当てられたデータ数
+        self.impurity = None                # 不純度
         self.gini_index = None              # 分割指数
+        self.num_data = None                # 割り当てられたデータ数
+        self.num_classes  = None            # クラスの数
+
 
     # 木の構築
-    def build(self, data, target) :
+    def build(self, data, target, depth, ini_num_classes) :
         # data: ノードに与えられたデータ
         # target: データの分類クラス
+        # depth: 深さ
+        # ini_num_classes: 初期のクラス数
 
+        self.depth = depth
         self.num_data = data.shape[0]
-        num_features = data.shape[1]
+        self.num_class = [len(target[target==i]) for i in ini_num_classes]
+
 
         # 全データが同一になったら終了
         if len(np.unique(target)) == 1:
             self.label = target[0]
+            self.impurity = self.criterion_func(target)
             return
 
         # 自分のクラスを設定（多数決）
-        num_class = {i: len(target[target==i]) for i in np.unique(target)}
-        self.label = max(num_class.items(), key=lambda x:x[1])[0]
+        class_count = {i: len(target[target==i]) for i in np.unique(target)}
+        self.label = max(class_count.items(), key=lambda x:x[1])[0]
+        self.impurity = self.criterion_func(target)
 
-        # 最良の分割を記憶する変数
-        best_gini_index = 0.0
-        best_feature = None
-        best_threshold = None
+        num_features = data.shape[1]
+        self.gini_index = 0.0
 
-        # 自身の不純度を先に計算
-        gini = self.gini_func(target)
-
-        for f in range (num_features):
+        if self.random_state != None:
+            np.random.seed(self.random_state)
+        f_loop_order = np.random.permutation(num_features).tolist()
+        for f in f_loop_order:
             # 分割候補計算
             data_f = np.unique(data[:, f])              # f番目の特徴量
             points = (data_f[:-1] + data_f[1:]) / 2.0   # 中間値
@@ -54,37 +62,43 @@ class TreeNode:
                 target_R = target[data[:, f] >= threshold]
 
                 # 分割後の不純度からGini係数を計算
-                gini_L = self.gini_func(target_L)
-                gini_R = self.gini_func(target_R)
-                pl = float(target_L.shape[0]) / self.num_data
-                pr = float(target_R.shape[0]) / self.num_data
-                gini_index = gini - (pl * gini_L + pr * gini_R)
+                value = self.calc_gini_index(target, target_L, target_R)
 
                 # よい分割を記憶
-                if gini_index > best_gini_index:
-                    best_gini_index = gini_index
-                    best_feature = f
-                    best_threshold = threshold
+                if self.gini_index < value:
+                    self.gini_index = value
+                    self.feature = f
+                    self.threshold = threshold
 
-        # 不純度が減らなければ終了
-        if best_gini_index == 0:
+        # 更新されない or 一定の深さに到達したら終了
+        isEnd = self.gini_index == 0 or depth == self.max_depth
+        if isEnd:
             return
-
-        # 最良の分割を保持
-        self.feature = best_feature
-        self.gini_index = best_gini_index
-        self.threshold = best_threshold
 
         # 左右の子を作成し再帰的に分割
         data_L = data[data[:, self.feature] < self.threshold]
         target_L = target[data[:, self.feature] < self.threshold]
-        self.left = TreeNode()
-        self.left.build(data_L, target_L)
+        self.left = TreeNode(self.criterion, self.max_depth)
+        self.left.build(data_L, target_L, depth+1, ini_num_classes)
 
         data_R = data[data[:, self.feature] >= self.threshold]
         target_R = target[data[:, self.feature] >= self.threshold]
-        self.right = TreeNode()
-        self.right.build(data_R, target_R)
+        self.right = TreeNode(self.criterion, self.max_depth)
+        self.right.build(data_R, target_R, depth+1, ini_num_classes)
+
+    # 分類方法の指定
+    def criterion_func(self, target):
+        classes = np.unique(target)
+        data_count = len(target)
+
+        if self.criterion == "gini":
+            value = 1
+            for c in classes:
+                value -= float(len(target[target == c]) / data_count) ** 2.0
+        elif self.criterion == "entropy":
+            value = 0
+            for c in classes:
+
 
     # ジニ係数の計算
     def gini_func(self, target):
