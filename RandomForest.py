@@ -33,7 +33,6 @@ class RandomForest(object):
 
     # 学習して決定木量産
     def fit(self, X_train, y_train):
-        num_data, num_features = X_train.shape
 
         self.estimators = []
         for i in range(self.n_estimators):
