@@ -32,7 +32,7 @@ def main():
         print("    ",f_name,":", f_importance)
 
     # 決定した領域の出力
-    plt = PlotResult(rf, X_train, y_train, X_test, y_test, feature_names, "result")
+    plt = PlotResult(rf, X_train, y_train, X_test, y_test, feature_names, "my_random_forest")
     plt.plot_result()
 
 
