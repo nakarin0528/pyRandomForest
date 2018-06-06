@@ -38,7 +38,7 @@ def main():
         print("    ",f_name,":", f_importance)
 
     # 決定した領域の出力
-    plot_result(clf_s, X_train, y_train, X_test, y_test, feature_names, "sklearn_random_forest ")
+    plot_result(clf_s, X_train, y_train, X_test, y_test, feature_names, "sklearn_random_forest")
 
 
 def plot_result(clf, X_train, y_train, X_test, y_test, feature_names, png_name):
