@@ -14,7 +14,7 @@ def main():
     feature_names = np.array(iris.feature_names)[use_feature_index]
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
 
-    n_estimators = 100
+    n_estimators = 50
 
     rf = RandomForest(n_estimators=n_estimators, random_state=300)
     rf.fit(X_train, y_train)
@@ -74,7 +74,7 @@ def plot_result(clf, X_train, y_train, X_test, y_test, feature_names, png_name):
     plt.legend(loc="upper left")
     plt.grid()
     # plt.show()
-    plt.savefig("random_forest" + png_name + ".png", dpi=300)
+    plt.savefig("random_forest_" + png_name + ".png", dpi=300)
 
 if __name__ == "__main__":
     main()
