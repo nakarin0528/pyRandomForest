@@ -146,7 +146,7 @@ class TreeNode(object):
         if isBottom:
             return self.label
         else:
-            if data[self.feature] < self.threshold:
+            if data[self.feature] <= self.threshold:
                 return self.left.predict(data)
             else:
                 return self.right.predict(data)
