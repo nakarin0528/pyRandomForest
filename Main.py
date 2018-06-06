@@ -74,7 +74,7 @@ def plot_result(clf, X_train, y_train, X_test, y_test, feature_names, png_name):
     plt.legend(loc="upper left")
     plt.grid()
     # plt.show()
-    plt.savefig("win_random_forest_" + png_name + ".png", dpi=300)
+    plt.savefig("random_forest_" + png_name + ".png", dpi=300)
 
 if __name__ == "__main__":
     main()
