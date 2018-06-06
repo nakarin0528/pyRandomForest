@@ -29,9 +29,8 @@ class TreeNode(object):
         # ini_num_classes: 初期のクラス数
 
         self.depth = depth
-        self.num_data = data.shape[0]
+        self.num_data = len(target)
         self.num_class = [len(target[target==i]) for i in ini_num_classes]
-
 
         # 全データが同一になったら終了
         if len(np.unique(target)) == 1:
@@ -58,8 +57,8 @@ class TreeNode(object):
             # 各分割探索
             for threshold in points:
                 # 閾値で２グループに分割
-                target_L = target[data[:, f] < threshold]
-                target_R = target[data[:, f] >= threshold]
+                target_L = target[data[:, f] <= threshold]
+                target_R = target[data[:, f] > threshold]
 
                 # 分割後の不純度からGini係数を計算
                 value = self.calc_gini_index(target, target_L, target_R)
@@ -76,13 +75,13 @@ class TreeNode(object):
             return
 
         # 左右の子を作成し再帰的に分割
-        data_L = data[data[:, self.feature] < self.threshold]
-        target_L = target[data[:, self.feature] < self.threshold]
+        data_L = data[data[:, self.feature] <= self.threshold]
+        target_L = target[data[:, self.feature] <= self.threshold]
         self.left = TreeNode(self.criterion, self.max_depth)
         self.left.build(data_L, target_L, depth+1, ini_num_classes)
 
-        data_R = data[data[:, self.feature] >= self.threshold]
-        target_R = target[data[:, self.feature] >= self.threshold]
+        data_R = data[data[:, self.feature] > self.threshold]
+        target_R = target[data[:, self.feature] > self.threshold]
         self.right = TreeNode(self.criterion, self.max_depth)
         self.right.build(data_R, target_R, depth+1, ini_num_classes)
 
@@ -113,7 +112,7 @@ class TreeNode(object):
         cri_p = self.criterion_func(target_p)
         cri_cl = self.criterion_func(target_cl)
         cri_cr = self.criterion_func(target_cr)
-        return cri_p - len(target_cl)/float(len(target_p))*cri_cl - len(target_p)/float(len(target_p))*cri_cr
+        return cri_p - len(target_cl)/float(len(target_p))*cri_cl - len(target_cr)/float(len(target_p))*cri_cr
 
     # # 木の剪定
     # def prune(self, criterion, num_node):
