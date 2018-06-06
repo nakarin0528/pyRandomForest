@@ -2,7 +2,7 @@
 
 import numpy as np
 
-class TreeNode:
+class TreeNode(object):
 
     def __init__(self, criterion="gini", max_depth=None, random_state=None):
         super(TreeNode, self).__init__()
@@ -22,7 +22,7 @@ class TreeNode:
 
 
     # 木の構築
-    def build(self, data, target, depth, ini_num_classes) :
+    def build(self, data, target, depth, ini_num_classes):
         # data: ノードに与えられたデータ
         # target: データの分類クラス
         # depth: 深さ
@@ -98,66 +98,70 @@ class TreeNode:
         elif self.criterion == "entropy":
             value = 0
             for c in classes:
+                p = float(len(target[target == c])) / data_count
+                if p != 0.0:
+                    value -= p * np.log2(p)
 
+        return value
 
     # ジニ係数の計算
-    def gini_func(self, target):
-        # target: 各データの分類クラス
-        classes = np.unique(target)
-        num_data = target.shape[0]
+    def calc_gini_index(self, target_p, target_cl, target_cr):
+        # target_p: データ分類クラスの全体
+        # target_cl: データ分類クラスの閾値の左側
+        # target_cr: データ分類クラスの閾値の右側
 
-        gini = 1.0
-        for c in classes:
-            gini -= (len(target[target == c]) / num_data) ** 2.0
+        cri_p = self.criterion_func(target_p)
+        cri_cl = self.criterion_func(target_cl)
+        cri_cr = self.criterion_func(target_cr)
+        return cri_p - len(target_cl)/float(len(target_p))*cri_cl - len(target_p)/float(len(target_p))*cri_cr
 
-        return gini
+    # # 木の剪定
+    # def prune(self, criterion, num_node):
+    #     # criterion: 剪定条件
+    #     # num_node: 全ノード数
+    #
+    #     # 自身が葉っぱだったら終了
+    #     if self.feature == None:
+    #         return
+    #
+    #     # 子ノードの剪定
+    #     self.left.prune(criterion, num_node)
+    #     self.right.prune(criterion, num_node)
+    #
+    #     # 左右が葉っぱだったら剪定
+    #     if self.left.feature == None and self.right.feature == None:
+    #         # 分割貢献度：GiniIndex * (データ数の割合)
+    #         result = self.gini_index * float(self.num_data) / num_node
+    #
+    #         # 貢献度が条件に対して不十分であれば剪定
+    #         if result < criterion:
+    #             self.feature = None
+    #             self.left = None
+    #             self.right = None
 
-    # 木の剪定
-    def prune(self, criterion, num_node) :
-        # criterion: 剪定条件
-        # num_node: 全ノード数
-
-        # 自身が葉っぱだったら終了
-        if self.feature == None:
-            return
-
-        # 子ノードの剪定
-        self.left.prune(criterion, num_node)
-        self.right.prune(criterion, num_node)
-
-        # 左右が葉っぱだったら剪定
-        if self.left.feature == None and self.right.feature == None:
-            # 分割貢献度：GiniIndex * (データ数の割合)
-            result = self.gini_index * float(self.num_data) / num_node
-
-            # 貢献度が条件に対して不十分であれば剪定
-            if result < criterion:
-                self.feature = None
-                self.left = None
-                self.right = None
 
     # 入力データの分類先クラスを返す
-    def predict(self, data) :
-        # 自身がノードの時は条件判定
-        if self.feature != None:
+    def predict(self, data):
+        # 自身がノードもしくは深さmaxであるかどうか
+        isBottom = self.feature == None or self.depth == self.max_depth
+        if isBottom:
+            return self.label
+        else:
             if data[self.feature] < self.threshold:
                 return self.left.predict(data)
             else:
                 return self.right.predict(data)
 
-        # 自身が葉っぱの時は地震の分類クラスを返す
-        else:
-            return self.label
 
     # 分類条件の出力
-    def print_tree(self, depth, TF) :
+    def print_tree(self, depth, TF):
         head = "   " * depth + TF + " -> "
 
-        # ノードの場合
-        if self.feature != None:
+        # 自身がノードもしくは深さmaxであるかどうか
+        isBottom = self.feature == None or self.depth == self.max_depth
+        if isBottom:
+            print(head + "{" + str(self.label) + ": " + str(self.num_data) + "}")
+        else:
             print(head + str(self.feature) + " < " + str(self.threshold) + "?")
             self.left.print_tree(depth + 1, "T")
             self.right.print_tree(depth + 1, "F")
-        # 葉っぱの場合
-        else:
-            print(head + "{" + str(self.label) + ": " + str(self.num_data) + "}")
