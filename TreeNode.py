@@ -18,7 +18,7 @@ class TreeNode(object):
         self.impurity = None                # 不純度
         self.gini_index = None              # 分割指数
         self.num_data = None                # 割り当てられたデータ数
-        self.num_classes  = None            # クラスの数
+        self.num_classes  = None            # 各クラスの数
 
 
     # 木の構築
@@ -30,7 +30,7 @@ class TreeNode(object):
 
         self.depth = depth
         self.num_data = len(target)
-        self.num_class = [len(target[target==i]) for i in ini_num_classes]
+        self.num_class = [len(target[target==i]) for i in ini_num_classes] # 各クラス数を計算
 
         # 全データが同一になったら終了
         if len(np.unique(target)) == 1:
